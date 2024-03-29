@@ -24,6 +24,14 @@ function runTests() {
       const { status, error } = spawnSync(runtime, ["test", argPath], {
         cwd: testPath,
         stdio: "inherit",
+        env: {
+          ...process.env,
+          FORCE_COLOR: "1",
+          BUN_GARBAGE_COLLECTOR_LEVEL: "1",
+          BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0",
+          GITHUB_ACTIONS: "false", // disable for now
+          BUN_DEBUG_QUIET_LOGS: "1",
+        },
       });
 
       if (error || status !== 0) {
@@ -62,8 +70,9 @@ function runTests() {
 | Total tests | Passed tests | Failed tests | Percentage |
 |-------|--------|--------|---------|
 | ${summary.total} | ${summary.pass} | ${summary.fail} | ${summary.percent}% |
-    `;
-    appendFileSync(markdownPath, markdown);
+
+${readFileSync(summaryPath, "utf8")}`;
+    writeFileSync(markdownPath, markdown);
   }
 }
 
