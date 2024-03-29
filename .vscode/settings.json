@@ -13,7 +13,8 @@
     "node_modules": true,
     ".git": true,
     "src/bun.js/WebKit": true,
-    "src/deps/*/**": true
+    "src/deps/*/**": true,
+    "test/node/node": true
   },
   "search.followSymlinks": false,
   "search.useIgnoreFiles": true,

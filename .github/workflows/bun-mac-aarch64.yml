@@ -475,6 +475,11 @@ jobs:
             ✅ test failures on ${{ matrix.tag }} have been resolved.
 
             <sup>[#${{github.sha}}](https://github.com/oven-sh/bun/commits/${{github.sha}})</sup>
+      - id: node-test
+        name: Node.js tests
+        working-directory: test/node
+        run: |
+          node scripts/run-tests.mjs || true
       - id: fail
         name: Fail the build
         if: steps.test.outputs.failing_tests != ''

@@ -1,0 +1,22 @@
+[
+  {
+    "group": "buffer",
+    "prefix": "parallel/test-buffer",
+    "ignoredTests": [
+      {
+        "test": "backing-arraybuffer.js",
+        "reason": "Internal binding checks if the buffer is on the heap"
+      }
+    ],
+    "skippedTests": [
+      {
+        "test": "constants.js",
+        "reason": "Hangs because the test runner outputs too much data"
+      },
+      {
+        "test": "tostring-rangeerror.js",
+        "reason": "Hangs"
+      }
+    ]
+  }
+]

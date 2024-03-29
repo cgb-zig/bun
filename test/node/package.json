@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "scripts": {
+    "import": "node scripts/import-tests.mjs",
+    "test": "node scripts/run-tests.mjs",
+    "test:bail": "node run test --bail"
+  }
+}
