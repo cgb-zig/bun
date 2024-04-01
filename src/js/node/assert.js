@@ -159,7 +159,7 @@ var require_errors = __commonJS({
         return (
           value && value.constructor && value.constructor.name
             ? (type = "instance of ".concat(value.constructor.name))
-            : (type = "type ".concat(_typeof(value))),
+            : (type = _typeof(value)),
           "Expected ".concat(input, ' to be returned from the "').concat(name, '"') +
             " function but got ".concat(type, ".")
         );

@@ -452,7 +452,7 @@ pub const Expect = struct {
         var msg = _msg.toSlice(default_allocator);
         defer msg.deinit();
 
-        const signature = comptime getSignature("fail", "", true);
+        const signature = comptime getSignature("fail", "", false);
         const fmt = signature ++ "\n\n{s}\n";
         globalObject.throwPretty(fmt, .{msg.slice()});
         return .zero;
