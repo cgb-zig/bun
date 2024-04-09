@@ -465,8 +465,8 @@ jobs:
         name: Node.js tests
         working-directory: test/node
         run: |
-          node scripts/import-tests.mjs || true
-          node scripts/run-tests.mjs || true
+          node runner.mjs
+          node runner.mjs --summary
       - id: fail
         name: Fail the build
         if: steps.test.outputs.failing_tests != ''

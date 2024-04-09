@@ -447,6 +447,13 @@ jobs:
         run: |
           node packages/bun-internal-test/src/runner.node.mjs  || true
         shell: bash
+      - id: node-test
+        name: Node.js tests
+        working-directory: test/node
+        run: |
+          node runner.mjs
+          node runner.mjs --summary
+        shell: bash
       - uses: sarisia/actions-status-discord@v1
         if: always() && steps.test.outputs.failing_tests != '' && github.event_name == 'pull_request'
         with:

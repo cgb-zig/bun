@@ -1,20 +1,19 @@
 [
   {
-    "group": "buffer",
-    "prefix": "parallel/test-buffer",
-    "ignoredTests": [
+    "pattern": "parallel/test-buffer",
+    "skip": [
       {
-        "test": "backing-arraybuffer.js",
+        "file": "backing-arraybuffer.js",
         "reason": "Internal binding checks if the buffer is on the heap"
       }
     ],
-    "skippedTests": [
+    "todo": [
       {
-        "test": "constants.js",
+        "file": "constants.js",
         "reason": "Hangs because the test runner outputs too much data"
       },
       {
-        "test": "tostring-rangeerror.js",
+        "file": "tostring-rangeerror.js",
         "reason": "Hangs"
       }
     ]

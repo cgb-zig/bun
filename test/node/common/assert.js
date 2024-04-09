@@ -48,6 +48,7 @@ function doesNotThrow(fn, error, message) {
   if (isIgnored(error, message)) {
     return;
   }
+  todo("doesNotThrow");
 }
 
 function equal(actual, expected, message) {
@@ -62,11 +63,17 @@ function equal(actual, expected, message) {
 }
 
 function fail(actual, expected, message, operator, stackStartFn) {
-  // assert.fail(actual, expected, message, operator, stackStartFn);
+  if (isIgnored(expected, message)) {
+    return;
+  }
+  todo("fail");
 }
 
 function ifError(value) {
-  // assert.ifError(value);
+  if (isIgnored(value)) {
+    return;
+  }
+  todo("ifError");
 }
 
 function match(string, regexp, message) {
@@ -81,27 +88,53 @@ function match(string, regexp, message) {
 }
 
 function notDeepEqual(actual, expected, message) {
-  // assert.notDeepEqual(actual, expected, message);
+  if (isIgnored(expected, message)) {
+    return;
+  }
+  todo("notDeepEqual");
 }
 
 function notDeepStrictEqual(actual, expected, message) {
-  // assert.notDeepStrictEqual(actual, expected, message);
+  if (isIgnored(expected, message)) {
+    return;
+  }
+  todo("notDeepStrictEqual");
 }
 
 function notEqual(actual, expected, message) {
-  // assert.notEqual(actual, expected, message);
+  if (isIgnored(expected, message)) {
+    return;
+  }
+  try {
+    expect(actual).not.toBe(expected);
+  } catch (cause) {
+    throwError(cause, message);
+  }
 }
 
 function notStrictEqual(actual, expected, message) {
-  // assert.notStrictEqual(actual, expected, message);
+  if (isIgnored(expected, message)) {
+    return;
+  }
+  try {
+    expect(actual).not.toStrictEqual(expected);
+  } catch (cause) {
+    throwError(cause, message);
+  }
 }
 
 function ok(value, message) {
+  if (isIgnored(message)) {
+    return;
+  }
   equal(!!value, true, message);
 }
 
 function rejects(asyncFn, error, message) {
-  // assert.rejects(asyncFn, error, message);
+  if (isIgnored(error, message)) {
+    return;
+  }
+  todo("rejects");
 }
 
 function strictEqual(actual, expected, message) {
@@ -211,11 +244,11 @@ function throwError(error, message) {
     error.message += `\n${gray}note: ${message}${reset}`;
   }
 
-  if (process.env.DEFER_ERRORS === "1") {
-    console.error(error);
-  } else {
-    throw error;
-  }
+  throw error;
+}
+
+function todo(name) {
+  throw new Error(`TODO: ${name}`);
 }
 
 export default ok;
