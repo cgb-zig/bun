@@ -1,5 +1,9 @@
 name: bun-macOS-x64-baseline
 
+permissions:
+  contents: read
+  checks: read
+
 concurrency:
   group: bun-macOS-x64-baseline-${{ github.ref }}
   cancel-in-progress: true
@@ -10,8 +14,11 @@ env:
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
+      - ".github/workflows/bun-mac-x64-baseline.yml"
+      - ".github/workflows/test.yml"
       - "src/**/*"
       - "test/**/*"
       - "packages/bun-usockets/src/**/*"
@@ -21,8 +28,11 @@ on:
       - "Makefile"
       - "Dockerfile"
   pull_request:
-    branches: [main]
+    branches:
+      - main
     paths:
+      - ".github/workflows/bun-mac-x64-baseline.yml"
+      - ".github/workflows/test.yml"
       - "src/**/*"
       - "test/**/*"
       - "packages/bun-usockets/src/**/*"
@@ -31,7 +41,6 @@ on:
       - "build.zig"
       - "Makefile"
       - "Dockerfile"
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
@@ -234,7 +243,6 @@ jobs:
     if: github.repository_owner == 'oven-sh'
     needs: [macOS-cpp, macos-object-files, macOS-dependencies]
     timeout-minutes: 90
-    permissions: write-all
     strategy:
       matrix:
         include:
@@ -363,23 +371,16 @@ jobs:
 
             [Commit ${{github.sha}}](https://github.com/oven-sh/bun/commits/${{github.sha}})
   macOS-test:
-    name: macOS Test
-    runs-on: ${{ matrix.runner }}
+    name: Tests ${{ matrix.tag }}
     needs: [macOS]
-    # if: github.event_name == 'pull_request' && github.repository_owner == 'oven-sh'
-    if: false
-    permissions:
-      pull-requests: write
-    timeout-minutes: 30
-    outputs:
-      failing_tests: ${{ steps.test.outputs.failing_tests }}
-      failing_tests_count: ${{ steps.test.outputs.failing_tests_count }}
+    if: ${{ github.event_name == 'pull_request' && github.repository_owner == 'oven-sh' }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - tag: bun-darwin-x64-baseline
             runner: macos-12-large
+<<<<<<< HEAD:.github/workflows/bun-mac-x64-baseline.yml
     steps:
       - id: checkout
         name: Checkout
@@ -470,3 +471,11 @@ jobs:
         name: Fail the build
         if: steps.test.outputs.failing_tests != ''
         run: exit 1
+=======
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
+    with:
+      pr-number: ${{ github.event.number }}
+      runs-on: ${{ matrix.runner }}
+      baseline: true
+>>>>>>> 285da6ead (Testing workflows):.github/workflows/bun-mac-x64-baseline.txt

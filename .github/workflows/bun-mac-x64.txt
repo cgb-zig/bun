@@ -361,21 +361,15 @@ jobs:
 
             [Commit ${{github.sha}}](https://github.com/oven-sh/bun/commits/${{github.sha}})
   macOS-test:
-    name: Tests ${{matrix.tag}}
-    runs-on: ${{ matrix.runner }}
+    name: Tests ${{ matrix.tag }}
     needs: [macOS]
-    if: github.event_name == 'pull_request' && github.repository_owner == 'oven-sh'
-    permissions:
-      pull-requests: write
-    timeout-minutes: 30
-    outputs:
-      failing_tests: ${{ steps.test.outputs.failing_tests }}
-      failing_tests_count: ${{ steps.test.outputs.failing_tests_count }}
+    if: ${{ github.event_name == 'pull_request' && github.repository_owner == 'oven-sh' }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - tag: bun-darwin-x64
+<<<<<<< HEAD:.github/workflows/bun-mac-x64.yml
             runner: macos-12-large
     steps:
       - id: checkout
@@ -465,3 +459,12 @@ jobs:
         name: Fail the build
         if: steps.test.outputs.failing_tests != ''
         run: exit 1
+=======
+            runner: macos-12-large 
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
+    with:
+      pr-number: ${{ github.event.number }}
+      runs-on: ${{ matrix.runner }}
+      baseline: false
+>>>>>>> 285da6ead (Testing workflows):.github/workflows/bun-mac-x64.txt

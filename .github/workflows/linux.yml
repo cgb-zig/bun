@@ -1,0 +1,97 @@
+name: Linux
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+      arch:
+        type: string
+        required: true
+      cpu:
+        type: string
+        required: true
+      assertions:
+        type: boolean
+      optimize:
+        type: boolean
+      canary:
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+          clean: true
+      - name: Checkout Submodules
+        shell: bash
+        run: |
+          ./scripts/update-submodules.sh
+      - uses: docker/setup-buildx-action@v3
+        id: buildx
+        with:
+          install: true
+      - name: Login to Docker Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          target: artifact
+          cache-from: type=registry,ref=oven/bun:buildcache-${{ inputs.tag }}
+          cache-to: type=registry,ref=oven/bun:buildcache-${{ inputs.tag }},mode=max
+          platforms: |
+            linux/${{ inputs.arch == 'x64' && 'amd64' || 'arm64' }}
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+            ARCH=${{ inputs.arch }}
+            BUILDARCH=${{ inputs.arch == 'x64' && 'amd64' || 'arm64' }}
+            BUILD_MACHINE_ARCH=${{ inputs.arch == 'x64' && 'x86_64' || 'aarch64' }}
+            CPU_TARGET=${{ inputs.arch == 'x64' && inputs.cpu || 'native' }}
+            ASSERTIONS=${{ inputs.assertions && 'ON' || 'OFF' }}
+            ZIG_OPTIMIZE=${{ inputs.optimize && 'ReleaseFast' || 'ReleaseSafe' }}
+            CANARY=${{ inputs.canary && '1' || '0' }}
+          outputs: |
+            type=local,dest=${{ runner.temp }}/release
+      - name: Zip
+        run: |
+          if [ ! -x "$(command -v zip)" ]; then
+            sudo apt-get update && sudo apt-get install -y zip --no-install-recommends
+          fi
+          if [ ! -x "$(command -v strip)" ]; then
+            sudo apt-get update && sudo apt-get install -y binutils --no-install-recommends
+          fi
+          cd ${{ runner.temp }}/release
+          chmod +x bun-profile bun
+          mkdir bun-${{ inputs.tag }}-profile
+          mkdir bun-${{ inputs.tag }}
+          strip bun
+          mv bun-profile bun-${{ inputs.tag }}-profile/bun-profile
+          mv bun bun-${{ inputs.tag }}/bun
+          zip -r bun-${{ inputs.tag }}-profile.zip bun-${{ inputs.tag }}-profile
+          zip -r bun-${{ inputs.tag }}.zip bun-${{ inputs.tag }}
+      - name: Upload bun-${{ inputs.tag }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bun-${{ inputs.tag }}
+          path: ${{runner.temp}}/release/bun-${{ inputs.tag }}.zip
+          if-no-files-found: error
+      - name: Upload bun-${{ inputs.tag }}-profile
+        uses: actions/upload-artifact@v4
+        with:
+          name: bun-${{ inputs.tag }}-profile
+          path: ${{runner.temp}}/release/bun-${{ inputs.tag }}-profile.zip
+          if-no-files-found: error

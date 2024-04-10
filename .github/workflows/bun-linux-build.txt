@@ -1,5 +1,8 @@
 name: bun-linux
 
+permissions:
+  contents: read
+
 concurrency:
   group: bun-linux-build-${{ github.ref }}
   cancel-in-progress: true
@@ -40,7 +43,6 @@ jobs:
     runs-on: ${{matrix.runner}}
     if: github.repository_owner == 'oven-sh'
     timeout-minutes: 90
-    permissions: write-all
     strategy:
       fail-fast: false
       matrix:
@@ -310,7 +312,7 @@ jobs:
           mode: upsert
           create_if_not_exists: false
           message: |
-            ✅ test failures on ${{ matrix.tag }} have been resolved. Thank you.
+            ✅ test failures on ${{ matrix.tag }} have been resolved.
 
             <sup>[#${{github.sha}}](https://github.com/oven-sh/bun/commits/${{github.sha}})</sup>
       - id: fail

@@ -15,7 +15,7 @@ env:
 
 jobs:
   format:
-    name: format
+    name: Format
     runs-on: ${{ vars.RUNNER_LINUX_X64 || 'ubuntu-latest' }}
     steps:
       - name: Checkout
@@ -41,6 +41,8 @@ jobs:
       - name: Format
         run: |
           bun fmt
+      - name: Format Zig
+        run: |
           bun fmt:zig
       - name: Commit # https://autofix.ci/
         uses: autofix-ci/action@d3e591514b99d0fca6779455ff8338516663f7cc
