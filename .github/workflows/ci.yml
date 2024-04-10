@@ -1,0 +1,42 @@
+name: CI
+
+# permissions: write-all
+
+on:
+  pull_request:
+    branches:
+      - fast-ci
+
+jobs:
+  linux-x64:
+    name: Build linux-x64
+    uses: ./.github/workflows/linux.yml
+    with:
+      tag: linux-x64
+      arch: x64
+      cpu: haswell
+      canary: ${{ github.ref == 'refs/heads/main' }}
+  linux-x64-test:
+    name: Test linux-x64
+    needs: linux-x64
+    if: ${{ github.event_name == 'pull_request' }}
+    uses: ./.github/workflows/test.yml
+    with:
+      pr-number: ${{ github.event.number }}
+      baseline: false
+  linux-x64-baseline:
+    name: Build linux-x64-baseline
+    uses: ./.github/workflows/linux.yml
+    with:
+      tag: linux-x64
+      arch: x64
+      cpu: haswell
+      canary: ${{ github.ref == 'refs/heads/main' }}
+  linux-x64-baseline-test:
+    name: Test linux-x64-baseline
+    needs: linux-x64
+    if: ${{ github.event_name == 'pull_request' }}
+    uses: ./.github/workflows/test.yml
+    with:
+      pr-number: ${{ github.event.number }}
+      baseline: false
