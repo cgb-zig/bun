@@ -1,8 +1,8 @@
 name: Test
 
-permissions:
-  contents: read
-  checks: read
+#permissions:
+#  contents: read
+#  checks: read
 
 on:
   workflow_call:

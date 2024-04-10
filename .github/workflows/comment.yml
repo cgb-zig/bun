@@ -1,7 +1,7 @@
 name: Comment
 
-permissions:
-  pull-requests: write
+#permissions:
+#  pull-requests: write
 
 on:
   workflow_run:
