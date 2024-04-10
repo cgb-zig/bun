@@ -24,19 +24,11 @@ on:
 
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: false
-          clean: true
-      - name: Checkout Submodules
-        shell: bash
-        run: |
-          ./scripts/update-submodules.sh
-      - uses: docker/setup-buildx-action@v3
-        id: buildx
+      - name: Setup Docker
+        uses: docker/setup-buildx-action@v3
         with:
           install: true
       - name: Login to Docker Registry
@@ -45,10 +37,9 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push
+      - name: Build
         uses: docker/build-push-action@v5
         with:
-          context: .
           push: false
           target: artifact
           cache-from: type=registry,ref=oven/bun:buildcache-${{ inputs.tag }}
@@ -66,7 +57,7 @@ jobs:
             CANARY=${{ inputs.canary && '1' || '0' }}
           outputs: |
             type=local,dest=${{ runner.temp }}/release
-      - name: Zip
+      - name: Prepare
         run: |
           if [ ! -x "$(command -v zip)" ]; then
             sudo apt-get update && sudo apt-get install -y zip --no-install-recommends

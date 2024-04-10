@@ -28,7 +28,7 @@ jobs:
     with:
       tag: linux-x64
       arch: x64
-      cpu: haswell
+      cpu: nehalem
       canary: ${{ github.ref == 'refs/heads/main' }}
   linux-x64-baseline-test:
     name: Test linux-x64-baseline
