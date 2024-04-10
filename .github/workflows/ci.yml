@@ -4,8 +4,7 @@ name: CI
 
 on:
   pull_request:
-    branches:
-      - fast-ci
+  push:
 
 jobs:
   linux-x64:
