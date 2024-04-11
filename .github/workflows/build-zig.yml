@@ -1,8 +1,5 @@
 name: Build Zig
 
-#permissions:
-#  contents: read
-
 on:
   workflow_call:
     inputs:
@@ -33,6 +30,9 @@ on:
       only-zig:
         type: boolean
         default: true
+      no-cache:
+        type: boolean
+        default: false
 
 jobs:
   build-zig:
@@ -45,15 +45,32 @@ jobs:
           install: true
           platforms: |
             linux/${{ inputs.arch == 'x64' && 'amd64' || 'arm64' }}
-      - name: Restore Cache
+      - if: ${{ !inputs.no-cache }}
+        name: Restore Zig Cache
         uses: actions/cache@v4
         with:
-          key: bun-${{ inputs.tag }}-${{ github.ref_name }}
+          key: bun-${{ inputs.tag }}-zig-${{ github.ref_name }}
           restore-keys: |
-            bun-${{ inputs.tag }}-
+            bun-${{ inputs.tag }}-zig-
+          path: |
+            /zig-cache
+      - if: ${{ !inputs.no-cache }}
+        name: Restore C++ Cache
+        uses: actions/cache@v4
+        with:
+          key: bun-${{ inputs.tag }}-cpp-${{ github.ref_name }}
+          restore-keys: |
+            bun-${{ inputs.tag }}-cpp-
           path: |
             /ccache
-            /zig-cache
+      - if: ${{ !inputs.no-cache }}
+        name: Restore Docker Cache
+        uses: actions/cache@v4
+        with:
+          key: bun-${{ inputs.tag }}-docker-${{ github.ref_name }}
+          restore-keys: |
+            bun-${{ inputs.tag }}-docker-
+          path: |
             ${{ runner.temp }}/dockercache
       - name: Build
         uses: docker/build-push-action@v5

@@ -24,12 +24,16 @@ on:
       canary:
         type: boolean
         default: false
+      no-cache:
+        type: boolean
+        default: false
 
 env:
   LLVM_VERSION: 16
+  BUN_VERSION: 1.1.2
 
 jobs:
-  deps:
+  build-submodules:
     name: Build Submodules
     runs-on: ${{ inputs.runs-on }}
     steps:
@@ -49,14 +53,15 @@ jobs:
             cat $(echo scripts/build*.sh scripts/all-dependencies.sh | tr " " "\n" | sort)
           }
           echo "hash=$(print_versions | shasum)" >> $GITHUB_OUTPUT
-      - name: Restore Cache
+      - if: ${{ !inputs.no-cache }}
+        name: Restore Cache
         id: cache
         uses: actions/cache/restore@v4
         with:
           path: ${{ runner.temp }}/bun-deps
           key: bun-deps-${{ inputs.tag }}-${{ steps.hash.outputs.hash }}
       # TODO: Figure out how to cache homebrew dependencies
-      - if: ${{ !steps.cache.outputs.cache-hit }}
+      - if: ${{ inputs.no-cache || !steps.cache.outputs.cache-hit }}
         name: Install Dependencies
         env:
           HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
@@ -80,17 +85,20 @@ jobs:
           echo "$(brew --prefix coreutils)/libexec/gnubin" >> $GITHUB_PATH
           echo "$(brew --prefix llvm@$LLVM_VERSION)/bin" >> $GITHUB_PATH
           brew link --overwrite llvm@$LLVM_VERSION
+      - if: ${{ inputs.no-cache || !steps.cache.outputs.cache-hit }}
+        name: Clone Submodules
+        run: |
+          ./scripts/update-submodules.sh
       - name: Build Submodules
-        if: ${{ !steps.cache.outputs.cache-hit }}
+        if: ${{ inputs.no-cache || !steps.cache.outputs.cache-hit }}
         env:
           CPU_TARGET: ${{ inputs.cpu }}
           BUN_DEPS_OUT_DIR: ${{ runner.temp }}/bun-deps
         run: |
           mkdir -p $BUN_DEPS_OUT_DIR
-          ./scripts/update-submodules.sh
           ./scripts/all-dependencies.sh
       - name: Save Cache
-        if: ${{ !steps.cache.outputs.cache-hit }}
+        if: ${{ inputs.no-cache || !steps.cache.outputs.cache-hit }}
         uses: actions/cache/save@v4
         with:
           path: ${{ runner.temp }}/bun-deps
@@ -100,4 +108,69 @@ jobs:
         with:
           name: bun-${{ inputs.tag }}-deps
           path: ${{ runner.temp }}/bun-deps
+          if-no-files-found: error
+  build-cpp:
+    name: Build C++
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      # TODO: Figure out how to cache homebrew dependencies
+      - name: Install Dependencies
+        env:
+          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_INSTALL_CLEANUP: 1
+        run: |
+          brew install --force \
+            llvm@${{ env.LLVM_VERSION }} \
+            ccache \
+            rust \
+            pkg-config \
+            coreutils \
+            libtool \
+            cmake \
+            libiconv \
+            automake \
+            openssl@1.1 \
+            ninja \
+            gnu-sed
+          echo "$(brew --prefix ccache)/bin" >> $GITHUB_PATH
+          echo "$(brew --prefix coreutils)/libexec/gnubin" >> $GITHUB_PATH
+          echo "$(brew --prefix llvm@$LLVM_VERSION)/bin" >> $GITHUB_PATH
+          brew link --overwrite llvm@$LLVM_VERSION
+      - if: ${{ !inputs.no-cache }}
+        name: Restore Cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/ccache
+          key: bun-${{ inputs.tag }}-cpp-${{ github.ref_name }}
+          restore-keys: |
+            bun-${{ inputs.tag }}-cpp-
+      - name: Compile
+        env:
+          CPU_TARGET: ${{ inputs.cpu }}
+          SOURCE_DIR: ${{ github.workspace }}
+          OBJ_DIR: ${{ runner.temp }}/bun-cpp-obj
+          BUN_DEPS_OUT_DIR: ${{ runner.temp }}/bun-deps
+          CCACHE_DIR: ${{ runner.temp }}/ccache
+        run: |
+          mkdir -p $OBJ_DIR
+          cd $OBJ_DIR
+          cmake -S $SOURCE_DIR -B $OBJ_DIR \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DUSE_LTO=ON \
+            -DBUN_CPP_ONLY=1 \
+            -DNO_CONFIGURE_DEPENDS=1
+          ./compile-cpp-only.sh -v
+      - name: Upload bun-${{ inputs.tag }}-cpp
+        uses: actions/upload-artifact@v4
+        with:
+          name: bun-${{ inputs.tag }}-cpp
+          path: ${{ runner.temp }}/bun-cpp-obj/bun-cpp-objects.a
           if-no-files-found: error
