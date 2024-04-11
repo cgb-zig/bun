@@ -48,9 +48,9 @@ jobs:
       - name: Restore Cache
         uses: actions/cache@v4
         with:
-          key: bun${{ inputs.only-zig && '-zig' || '' }}-${{ inputs.tag }}-${{ github.ref_name }}
+          key: bun-${{ inputs.tag }}-${{ github.ref_name }}
           restore-keys: |
-            bun${{ inputs.only-zig && '-zig' || '' }}-${{ inputs.tag }}-
+            bun-${{ inputs.tag }}-
           path: |
             /ccache
             /zig-cache
@@ -79,10 +79,10 @@ jobs:
           outputs: |
             type=local,dest=${{ runner.temp }}/release
       - if: ${{ inputs.only-zig }}
-        name: Upload Zig Object
+        name: Upload bun-${{ inputs.tag }}-zig
         uses: actions/upload-artifact@v4
         with:
-          name: bun-zig-${{ inputs.tag }}
+          name: bun-${{ inputs.tag }}-zig
           path: ${{ runner.temp }}/release/bun-zig.o
           if-no-files-found: error
       - if: ${{ !inputs.only-zig }}
