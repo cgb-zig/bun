@@ -32,7 +32,6 @@ jobs:
     name: Build darwin-x64
     uses: ./.github/workflows/build-darwin.yml
     with:
-      runs-on: namespace-profile-fast-ci
       tag: darwin-x64
       arch: x64
       cpu: haswell
@@ -41,7 +40,6 @@ jobs:
     name: Build darwin-x64-baseline
     uses: ./.github/workflows/build-darwin.yml
     with:
-      runs-on: namespace-profile-fast-ci
       tag: darwin-x64-baseline
       arch: x64
       cpu: nehalem
