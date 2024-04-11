@@ -33,15 +33,14 @@ jobs:
     name: Install System Dependencies
     runs-on: ${{ inputs.runs-on }}
     steps:
-      - name: Restore Cache
-        id: sysdeps
-        uses: actions/cache/restore@v4
-        with:
-          key: bun-sysdeps-${{ inputs.tag }}-${{ env.LLVM_VERSION }}
-          path: |
-            /usr/local/Cellar
-      - if: ${{ !steps.sysdeps.outputs.cache-hit }}
-        name: Install Dependencies
+      # - name: Restore Cache
+      #   id: sysdeps
+      #   uses: actions/cache/restore@v4
+      #   with:
+      #     key: bun-sysdeps-${{ inputs.tag }}-${{ env.LLVM_VERSION }}
+      #     path: |
+      #       /usr/local/Cellar
+      - name: Install Dependencies
         env:
           HOMEBREW_PREFIX: /usr/local/homebrew
           HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
@@ -67,13 +66,13 @@ jobs:
         uses: mxschmitt/action-tmate@v3
         with:
           limit-access-to-actor: true
-      - if: ${{ !steps.sysdeps.outputs.cache-hit }}
-        name: Save Cache
-        uses: actions/cache/save@v4
-        with:
-          key: ${{ steps.sysdeps.outputs.cache-primary-key }}
-          path: |
-            /usr/local/Cellar
+      # - if: ${{ !steps.sysdeps.outputs.cache-hit }}
+      #   name: Save Cache
+      #   uses: actions/cache/save@v4
+      #   with:
+      #     key: ${{ steps.sysdeps.outputs.cache-primary-key }}
+      #     path: |
+      #       /usr/local/Cellar
   deps:
     name: Build Dependencies
     needs: sysdeps
