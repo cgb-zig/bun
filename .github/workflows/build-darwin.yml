@@ -15,6 +15,15 @@ on:
       cpu:
         type: string
         required: true
+      assertions:
+        type: boolean
+        default: false
+      deoptimize:
+        type: boolean
+        default: false
+      canary:
+        type: boolean
+        default: false
 
 env:
   LLVM_VERSION: 16

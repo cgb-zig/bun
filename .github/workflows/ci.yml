@@ -29,27 +29,23 @@ jobs:
   #     canary: ${{ github.ref == 'refs/heads/main' }}
   #     only-zig: false
   darwin-x64:
-    name: "Build Zig: darwin-x64"
-    uses: ./.github/workflows/build-zig.yml
+    name: Build darwin-x64
+    uses: ./.github/workflows/build-darwin.yml
     with:
       runs-on: namespace-profile-fast-ci
       tag: darwin-x64
-      os: darwin
       arch: x64
       cpu: haswell
       canary: ${{ github.ref == 'refs/heads/main' }}
-      only-zig: true
   darwin-x64-baseline:
-    name: "Build Zig: darwin-x64-baseline"
-    uses: ./.github/workflows/build-zig.yml
+    name: Build darwin-x64-baseline
+    uses: ./.github/workflows/build-darwin.yml
     with:
       runs-on: namespace-profile-fast-ci
       tag: darwin-x64-baseline
-      os: darwin
       arch: x64
       cpu: nehalem
       canary: ${{ github.ref == 'refs/heads/main' }}
-      only-zig: true
   # linux-x64-test:
   #   name: Test linux-x64
   #   needs: linux-x64
