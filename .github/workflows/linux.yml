@@ -40,17 +40,17 @@ jobs:
           restore-keys: |
             ${{ inputs.tag }}-ccache-
           path: |
-            /ccache
-            /dockercache
+            ${{ runner.temp }}/ccache
+            ${{ runner.temp }}/dockercache
       - name: Build
         uses: docker/build-push-action@v5
         with:
           push: false
           target: artifact
           cache-from: |
-            type=local,src=/dockercache
+            type=local,src=${{ runner.temp }}/dockercache
           cache-to: |
-            type=local,dest=/dockercache,mode=max
+            type=local,dest=${{ runner.temp }}/dockercache,mode=max
           platforms: |
             linux/${{ inputs.arch == 'x64' && 'amd64' || 'arm64' }}
           build-args: |
