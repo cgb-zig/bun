@@ -37,8 +37,28 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          sparse-checkout: |
+            .gitmodules
+            src/deps
+      - name: Hash Submodules
+        id: hash
+        run: |
+          print_versions() {
+            git submodule | grep -v WebKit
+            llvm-config --version
+            rustc --version
+            cat $(echo scripts/build*.sh scripts/all-dependencies.sh | tr " " "\n" | sort)
+          }
+          echo "hash=$(print_versions | sha1sum | cut -c 1-10)" >> $GITHUB_OUTPUT
+      - name: Restore Cache
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/bun-deps
+          key: bun-deps-${{ inputs.tag }}-${{ steps.hash.outputs.hash }}
       # TODO: Figure out how to cache homebrew dependencies
-      - name: Install Dependencies
+      - if: ${{ !steps.cache.outputs.cache-hit }}
+        name: Install Dependencies
         env:
           HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
           HOMEBREW_NO_AUTO_UPDATE: 1
@@ -61,22 +81,6 @@ jobs:
           echo "$(brew --prefix coreutils)/libexec/gnubin" >> $GITHUB_PATH
           echo "$(brew --prefix llvm@$LLVM_VERSION)/bin" >> $GITHUB_PATH
           brew link --overwrite llvm@$LLVM_VERSION
-      - name: Hash Submodules
-        id: hash
-        run: |
-          print_versions() {
-            git submodule | grep -v WebKit
-            llvm-config --version
-            rustc --version
-            cat $(echo scripts/build*.sh scripts/all-dependencies.sh | tr " " "\n" | sort)
-          }
-          echo "hash=$(print_versions | sha1sum | cut -c 1-10)" >> $GITHUB_OUTPUT
-      - name: Restore Cache
-        id: cache
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ runner.temp }}/bun-deps
-          key: bun-deps-${{ inputs.tag }}-${{ steps.hash.outputs.hash }}
       - name: Build Submodules
         if: ${{ !steps.cache.outputs.cache-hit }}
         env:
