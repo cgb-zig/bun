@@ -36,9 +36,9 @@ jobs:
       - name: Restore Cache
         uses: actions/cache@v4
         with:
-          key: ${{ inputs.tag }}-ccache-${{ github.ref_name }}
+          key: ${{ inputs.tag }}-${{ github.ref_name }}
           restore-keys: |
-            ${{ inputs.tag }}-ccache-
+            ${{ inputs.tag }}-
           path: |
             ${{ runner.temp }}/ccache
             ${{ runner.temp }}/dockercache
