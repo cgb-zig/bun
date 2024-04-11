@@ -10,6 +10,7 @@ jobs:
     name: Build linux-x64
     uses: ./.github/workflows/linux.yml
     with:
+      runs-on: namespace-profile-fast-ci
       tag: linux-x64
       arch: x64
       cpu: haswell
@@ -21,20 +22,23 @@ jobs:
     uses: ./.github/workflows/test.yml
     with:
       pr-number: ${{ github.event.number }}
+      runs-on: ubuntu-latest
       baseline: false
   linux-x64-baseline:
     name: Build linux-x64-baseline
     uses: ./.github/workflows/linux.yml
     with:
-      tag: linux-x64
+      runs-on: namespace-profile-fast-ci
+      tag: linux-x64-baseline
       arch: x64
       cpu: nehalem
       canary: ${{ github.ref == 'refs/heads/main' }}
   linux-x64-baseline-test:
     name: Test linux-x64-baseline
-    needs: linux-x64
+    needs: linux-x64-baseline
     if: ${{ github.event_name == 'pull_request' }}
     uses: ./.github/workflows/test.yml
     with:
       pr-number: ${{ github.event.number }}
-      baseline: false
+      runs-on: ubuntu-latest
+      baseline: true
