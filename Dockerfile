@@ -160,7 +160,10 @@ COPY src/deps/c-ares ${BUN_DIR}/src/deps/c-ares
 
 WORKDIR $BUN_DIR
 
-RUN --mount=type=cache,target=/ccache cd $BUN_DIR && make c-ares && rm -rf ${BUN_DIR}/src/deps/c-ares ${BUN_DIR}/Makefile
+RUN --mount=type=cache,target=/ccache \
+  cd $BUN_DIR \
+  && make c-ares \
+  && rm -rf ${BUN_DIR}/src/deps/c-ares ${BUN_DIR}/Makefile
 
 FROM bun-base as lolhtml
 
@@ -175,8 +178,11 @@ COPY src/deps/lol-html ${BUN_DIR}/src/deps/lol-html
 
 ENV CCACHE_DIR=/ccache
 
-RUN --mount=type=cache,target=/ccache export PATH=$PATH:$HOME/.cargo/bin && cd ${BUN_DIR} && \
-  make lolhtml && rm -rf src/deps/lol-html Makefile
+RUN --mount=type=cache,target=/ccache \
+  export PATH=$PATH:$HOME/.cargo/bin \
+  && cd ${BUN_DIR} \
+  && make lolhtml \
+  && rm -rf src/deps/lol-html Makefile
 
 FROM bun-base as mimalloc
 
@@ -190,8 +196,10 @@ COPY src/deps/mimalloc ${BUN_DIR}/src/deps/mimalloc
 
 ENV CCACHE_DIR=/ccache
 
-RUN --mount=type=cache,target=/ccache cd ${BUN_DIR} && \ 
-  make mimalloc && rm -rf src/deps/mimalloc Makefile;
+RUN --mount=type=cache,target=/ccache \
+  cd ${BUN_DIR} \
+  && make mimalloc \
+  && rm -rf src/deps/mimalloc Makefile
 
 FROM bun-base as mimalloc-debug
 
@@ -205,8 +213,10 @@ COPY src/deps/mimalloc ${BUN_DIR}/src/deps/mimalloc
 
 ENV CCACHE_DIR=/ccache
 
-RUN --mount=type=cache,target=/ccache cd ${BUN_DIR} && \ 
-  make mimalloc-debug && rm -rf src/deps/mimalloc Makefile;
+RUN --mount=type=cache,target=/ccache \
+  cd ${BUN_DIR} \
+  && make mimalloc-debug \
+  && rm -rf src/deps/mimalloc Makefile
 
 FROM bun-base as zlib
 
@@ -220,8 +230,10 @@ COPY src/deps/zlib ${BUN_DIR}/src/deps/zlib
 
 WORKDIR $BUN_DIR
 
-RUN --mount=type=cache,target=/ccache cd $BUN_DIR && \
-  make zlib && rm -rf src/deps/zlib Makefile
+RUN --mount=type=cache,target=/ccache \
+  cd $BUN_DIR \
+  && make zlib \
+  && rm -rf src/deps/zlib Makefile
 
 FROM bun-base as libarchive
 
@@ -237,8 +249,10 @@ COPY src/deps/libarchive ${BUN_DIR}/src/deps/libarchive
 
 WORKDIR $BUN_DIR
 
-RUN --mount=type=cache,target=/ccache cd $BUN_DIR && \
-  make libarchive && rm -rf src/deps/libarchive Makefile
+RUN --mount=type=cache,target=/ccache \
+  cd $BUN_DIR \
+  && make libarchive \
+  && rm -rf src/deps/libarchive Makefile
 
 FROM bun-base as tinycc
 
@@ -264,7 +278,10 @@ WORKDIR $BUN_DIR
 
 ENV CCACHE_DIR=/ccache
 
-RUN --mount=type=cache,target=/ccache cd ${BUN_DIR} && make boringssl && rm -rf src/deps/boringssl Makefile
+RUN --mount=type=cache,target=/ccache \
+  cd ${BUN_DIR} \
+  && make boringssl \
+  && rm -rf src/deps/boringssl Makefile
 
 FROM bun-base as base64
 
@@ -294,7 +311,9 @@ COPY src/deps/zstd ${BUN_DIR}/src/deps/zstd
 
 WORKDIR $BUN_DIR
 
-RUN --mount=type=cache,target=/ccache cd $BUN_DIR && make zstd
+RUN --mount=type=cache,target=/ccache \
+  cd $BUN_DIR \
+  && make zstd
 
 FROM bun-base as ls-hpack
 
@@ -310,7 +329,9 @@ COPY src/deps/ls-hpack ${BUN_DIR}/src/deps/ls-hpack
 
 WORKDIR $BUN_DIR
 
-RUN --mount=type=cache,target=/ccache cd $BUN_DIR && make lshpack
+RUN --mount=type=cache,target=/ccache \
+  cd $BUN_DIR \
+  && make lshpack
 
 FROM bun-base-with-zig as bun-identifier-cache
 
@@ -325,7 +346,8 @@ WORKDIR $BUN_DIR
 COPY src/js_lexer/identifier_data.zig ${BUN_DIR}/src/js_lexer/identifier_data.zig
 COPY src/js_lexer/identifier_cache.zig ${BUN_DIR}/src/js_lexer/identifier_cache.zig
 
-RUN --mount=type=cache,target=/zig-cache cd $BUN_DIR \
+RUN --mount=type=cache,target=/zig-cache \
+  cd $BUN_DIR \
   && zig run src/js_lexer/identifier_data.zig
 
 FROM bun-base as bun-node-fallbacks
@@ -369,7 +391,7 @@ COPY src/deps/boringssl/include ${BUN_DIR}/src/deps/boringssl/include
 
 ENV CCACHE_DIR=/ccache
 
-RUN --mount=type=cache,target=/ccache  mkdir ${BUN_DIR}/build \
+RUN --mount=type=cache,target=/ccache mkdir ${BUN_DIR}/build \
   && cd ${BUN_DIR}/build \
   && mkdir -p tmp_modules tmp_functions js codegen \
   && cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release -DUSE_LTO=ON -DUSE_DEBUG_JSC=${ASSERTIONS} -DBUN_CPP_ONLY=1 -DWEBKIT_DIR=/build/bun/bun-webkit -DCANARY=${CANARY} -DZIG_COMPILER=system \
@@ -387,7 +409,8 @@ COPY src/api ${BUN_DIR}/src/api
 WORKDIR $BUN_DIR
 
 # TODO: move away from Makefile entirely
-RUN ---mount=type=cache,target=/zig-cache bun install --frozen-lockfile \
+RUN --mount=type=cache,target=/zig-cache \
+  bun install --frozen-lockfile \
   && make runtime_js fallback_decoder bun_error \
   && rm -rf src/runtime src/fallback.ts node_modules bun.lockb package.json Makefile
 
@@ -413,7 +436,9 @@ COPY --from=bun-codegen-for-zig ${BUN_DIR}/packages/bun-error/dist ${BUN_DIR}/pa
 
 WORKDIR $BUN_DIR
 
-RUN --mount=type=cache,target=/ccache --mount=type=cache,target=/zig-cache mkdir -p build \
+RUN --mount=type=cache,target=/ccache \
+    --mount=type=cache,target=/zig-cache \
+  mkdir -p build \
   && bun run $BUN_DIR/src/codegen/bundle-modules.ts --debug=OFF $BUN_DIR/build \
   && cd build \
   && cmake .. \
@@ -475,7 +500,9 @@ COPY --from=bun-cpp-objects ${BUN_DIR}/bun-webkit/lib ${BUN_DIR}/bun-webkit/lib
 
 WORKDIR $BUN_DIR/build
 
-RUN --mount=type=cache,target=/ccache --mount=type=cache,target=/zig-cache cmake .. \
+RUN --mount=type=cache,target=/ccache \
+    --mount=type=cache,target=/zig-cache \
+  cmake .. \
   -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DBUN_LINK_ONLY=1 \
@@ -534,7 +561,9 @@ COPY --from=bun-cpp-objects ${BUN_DIR}/bun-webkit/lib ${BUN_DIR}/bun-webkit/lib
 
 WORKDIR $BUN_DIR/build
 
-RUN --mount=type=cache,target=/ccache --mount=type=cache,target=/zig-cache cmake .. \
+RUN --mount=type=cache,target=/ccache \
+    --mount=type=cache,target=/zig-cache \
+  cmake .. \
   -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DBUN_LINK_ONLY=1 \
