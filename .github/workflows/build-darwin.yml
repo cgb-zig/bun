@@ -33,33 +33,12 @@ jobs:
     name: Install System Dependencies
     runs-on: ${{ inputs.runs-on }}
     steps:
-      - name: Restore Cache
-        id: sysdeps
-        uses: actions/cache@v4
+      - uses: tecolicom/actions-use-homebrew-tools@v1
         with:
           key: bun-sysdeps-${{ inputs.tag }}-${{ env.LLVM_VERSION }}
-          path: |
-            /usr/local/Cellar/{llvm@${{ env.LLVM_VERSION }},ccache,rust,pkg-config,coreutils,libtool,cmake,libiconv,automake,openssl@1.1,ninja,gnu-sed}
-      - if: ${{ !steps.sysdeps.outputs.cache-hit }}
-        name: Install Dependencies
-        env:
-          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
-          HOMEBREW_NO_AUTO_UPDATE: 1
-          HOMEBREW_NO_INSTALL_CLEANUP: 1
-        run: |
-          brew install --force \
-            llvm@${{ env.LLVM_VERSION }} \
-            ccache \
-            rust \
-            pkg-config \
-            coreutils \
-            libtool \
-            cmake \
-            libiconv \
-            automake \
-            openssl@1.1 \
-            ninja \
-            gnu-sed
+          tools: llvm@${{ env.LLVM_VERSION }} ccache rust pkg-config coreutils libtool cmake libiconv automake openssl@1.1 ninja gnu-sed
+          cache: true
+
   # deps:
   #   name: Build Dependencies
   #   needs: sysdeps
