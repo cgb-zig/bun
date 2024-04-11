@@ -29,73 +29,72 @@ env:
   LLVM_VERSION: 16
 
 jobs:
-  sysdeps:
-    name: Install System Dependencies
+  deps:
+    name: Build Submodules
     runs-on: ${{ inputs.runs-on }}
     steps:
-      - uses: tecolicom/actions-use-homebrew-tools@v1
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          key: bun-sysdeps-${{ inputs.tag }}-${{ env.LLVM_VERSION }}
-          tools: llvm@${{ env.LLVM_VERSION }} ccache rust pkg-config coreutils libtool cmake libiconv automake openssl@1.1 ninja gnu-sed
-          cache: true
-
-  # deps:
-  #   name: Build Dependencies
-  #   needs: sysdeps
-  #   runs-on: ${{ inputs.runs-on }}
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #       with:
-  #         submodules: recursive
-  #     - name: Restore System Dependencies
-  #       id: sysdeps
-  #       uses: actions/cache/restore@v4
-  #       with:
-  #         fail-on-cache-miss: true
-  #         key: bun-sysdeps-${{ inputs.arch }}-${{ env.LLVM_VERSION }}
-  #         path: |
-  #           /usr/local/Cellar
-  #     - name: Prepare System Dependencies
-  #       run: |
-  #         echo "$(brew --prefix ccache)/bin" >> $GITHUB_PATH
-  #         echo "$(brew --prefix coreutils)/libexec/gnubin" >> $GITHUB_PATH
-  #         echo "$(brew --prefix llvm@$LLVM_VERSION)/bin" >> $GITHUB_PATH
-  #         brew link --overwrite llvm@$LLVM_VERSION
-  #     - name: Hash Submodule Dependencies
-  #       id: hashdeps
-  #       run: |
-  #         print_versions() {
-  #           git submodule | grep -v WebKit
-  #           llvm-config --version
-  #           rustc --version
-  #           cat $(echo scripts/build*.sh scripts/all-dependencies.sh | tr " " "\n" | sort)
-  #         }
-  #         echo "hash=$(print_versions | sha1sum | cut -c 1-10)" >> $GITHUB_OUTPUT
-  #     - name: Restore Submodule Dependencies
-  #       id: deps
-  #       uses: actions/cache/restore@v4
-  #       with:
-  #         path: ${{ runner.temp }}/bun-deps
-  #         key: bun-deps-${{ inputs.tag }}-${{ steps.hashdeps.outputs.hash }}
-  #     - name: Build Submodule Dependencies
-  #       if: ${{ !steps.deps.outputs.cache-hit }}
-  #       env:
-  #         CPU_TARGET: ${{ inputs.cpu }}
-  #         BUN_DEPS_OUT_DIR: ${{ runner.temp }}/bun-deps
-  #       run: |
-  #         mkdir -p $BUN_DEPS_OUT_DIR
-  #         ./scripts/clean-dependencies.sh
-  #         ./scripts/all-dependencies.sh
-  #     - name: Save Submodule Dependencies
-  #       if: ${{ !steps.deps.outputs.cache-hit }}
-  #       uses: actions/cache/save@v4
-  #       with:
-  #         path: ${{ runner.temp }}/bun-deps
-  #         key: ${{ steps.deps.outputs.cache-primary-key }}
-  #     - name: Upload bun-${{ inputs.tag }}-deps
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: bun-${{ inputs.tag }}-deps
-  #         path: ${{ runner.temp }}/bun-deps
-  #         if-no-files-found: error
+          submodules: recursive
+      # TODO: Figure out how to cache homebrew dependencies
+      - name: Install Dependencies
+        env:
+          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_INSTALL_CLEANUP: 1
+        run: |
+          brew install --force \
+            llvm@${{ env.LLVM_VERSION }} \
+            ccache \
+            rust \
+            pkg-config \
+            coreutils \
+            libtool \
+            cmake \
+            libiconv \
+            automake \
+            openssl@1.1 \
+            ninja \
+            gnu-sed
+          echo "$(brew --prefix ccache)/bin" >> $GITHUB_PATH
+          echo "$(brew --prefix coreutils)/libexec/gnubin" >> $GITHUB_PATH
+          echo "$(brew --prefix llvm@$LLVM_VERSION)/bin" >> $GITHUB_PATH
+          brew link --overwrite llvm@$LLVM_VERSION
+      - name: Hash Submodules
+        id: hash
+        run: |
+          print_versions() {
+            git submodule | grep -v WebKit
+            llvm-config --version
+            rustc --version
+            cat $(echo scripts/build*.sh scripts/all-dependencies.sh | tr " " "\n" | sort)
+          }
+          echo "hash=$(print_versions | sha1sum | cut -c 1-10)" >> $GITHUB_OUTPUT
+      - name: Restore Cache
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/bun-deps
+          key: bun-deps-${{ inputs.tag }}-${{ steps.hash.outputs.hash }}
+      - name: Build Submodules
+        if: ${{ !steps.cache.outputs.cache-hit }}
+        env:
+          CPU_TARGET: ${{ inputs.cpu }}
+          BUN_DEPS_OUT_DIR: ${{ runner.temp }}/bun-deps
+        run: |
+          mkdir -p $BUN_DEPS_OUT_DIR
+          ./scripts/clean-dependencies.sh
+          ./scripts/all-dependencies.sh
+      - name: Save Cache
+        if: ${{ !steps.cache.outputs.cache-hit }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/bun-deps
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+      - name: Upload bun-${{ inputs.tag }}-deps
+        uses: actions/upload-artifact@v4
+        with:
+          name: bun-${{ inputs.tag }}-deps
+          path: ${{ runner.temp }}/bun-deps
+          if-no-files-found: error
