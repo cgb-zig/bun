@@ -36,7 +36,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: recursive
           sparse-checkout: |
             .gitmodules
             src/deps
@@ -49,7 +48,7 @@ jobs:
             echo "LLVM_VERSION=${{ env.LLVM_VERSION }}"
             cat $(echo scripts/build*.sh scripts/all-dependencies.sh | tr " " "\n" | sort)
           }
-          echo "hash=$(print_versions | sha1sum | cut -c 1-10)" >> $GITHUB_OUTPUT
+          echo "hash=$(print_versions | shasum)" >> $GITHUB_OUTPUT
       - name: Restore Cache
         id: cache
         uses: actions/cache/restore@v4
