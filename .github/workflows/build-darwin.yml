@@ -87,7 +87,7 @@ jobs:
           BUN_DEPS_OUT_DIR: ${{ runner.temp }}/bun-deps
         run: |
           mkdir -p $BUN_DEPS_OUT_DIR
-          ./scripts/clean-dependencies.sh
+          ./scripts/update-submodules.sh
           ./scripts/all-dependencies.sh
       - name: Save Cache
         if: ${{ !steps.cache.outputs.cache-hit }}
