@@ -40,7 +40,7 @@ jobs:
           restore-keys: |
             ${{ inputs.tag }}-
           path: |
-            ${{ runner.temp }}/ccache
+            /ccache
             ${{ runner.temp }}/dockercache
       - name: Build
         uses: docker/build-push-action@v5
