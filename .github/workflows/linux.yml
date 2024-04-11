@@ -17,7 +17,7 @@ on:
         required: true
       assertions:
         type: boolean
-      optimize:
+      deoptimize:
         type: boolean
       canary:
         type: boolean
@@ -27,10 +27,10 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Docker
-        uses: docker/setup-buildx-action@v3
-        with:
-          install: true
+      # - name: Setup Docker
+      #   uses: docker/setup-buildx-action@v3
+      #   with:
+      #     install: true
       - name: Login to Docker Registry
         uses: docker/login-action@v3
         with:
@@ -48,12 +48,12 @@ jobs:
             linux/${{ inputs.arch == 'x64' && 'amd64' || 'arm64' }}
           build-args: |
             GIT_SHA=${{ github.sha }}
-            ARCH=${{ inputs.arch }}
+            ARCH=${{ inputs.arch == 'x64' && 'x86_64' || 'aarch64' }}
             BUILDARCH=${{ inputs.arch == 'x64' && 'amd64' || 'arm64' }}
             BUILD_MACHINE_ARCH=${{ inputs.arch == 'x64' && 'x86_64' || 'aarch64' }}
             CPU_TARGET=${{ inputs.arch == 'x64' && inputs.cpu || 'native' }}
             ASSERTIONS=${{ inputs.assertions && 'ON' || 'OFF' }}
-            ZIG_OPTIMIZE=${{ inputs.optimize && 'ReleaseFast' || 'ReleaseSafe' }}
+            ZIG_OPTIMIZE=${{ inputs.deoptimize && 'ReleaseSafe' || 'ReleaseFast' }}
             CANARY=${{ inputs.canary && '1' || '0' }}
           outputs: |
             type=local,dest=${{ runner.temp }}/release
