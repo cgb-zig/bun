@@ -167,7 +167,8 @@ jobs:
             -DUSE_LTO=ON \
             -DBUN_CPP_ONLY=1 \
             -DNO_CONFIGURE_DEPENDS=1
-          bash compile-cpp-only.sh -v
+          chmod +x compile-cpp.sh
+          ./compile-cpp-only.sh -v
       - name: Upload bun-${{ inputs.tag }}-cpp
         uses: actions/upload-artifact@v4
         with:
