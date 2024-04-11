@@ -48,9 +48,9 @@ jobs:
       - name: Restore Cache
         uses: actions/cache@v4
         with:
-          key: bun-${{ inputs.tag }}-${{ github.ref_name }}
+          key: bun${{ inputs.only-zig && '-zig' || '' }}-${{ inputs.tag }}-${{ github.ref_name }}
           restore-keys: |
-            bun-${{ inputs.tag }}-
+            bun${{ inputs.only-zig && '-zig' || '' }}-${{ inputs.tag }}-
           path: |
             /ccache
             /zig-cache
@@ -78,7 +78,15 @@ jobs:
             CANARY=${{ inputs.canary && '1' || '0' }}
           outputs: |
             type=local,dest=${{ runner.temp }}/release
-      - name: Prepare
+      - if: ${{ inputs.only-zig }}
+        name: Upload Zig Object
+        uses: actions/upload-artifact@v4
+        with:
+          name: bun-zig-${{ inputs.tag }}
+          path: ${{ runner.temp }}/release/bun-zig.o
+          if-no-files-found: error
+      - if: ${{ !inputs.only-zig }}
+        name: Prepare
         run: |
           cd ${{ runner.temp }}/release
           chmod +x bun-profile bun
@@ -89,13 +97,6 @@ jobs:
           mv bun bun-${{ inputs.tag }}/bun
           zip -r bun-${{ inputs.tag }}-profile.zip bun-${{ inputs.tag }}-profile
           zip -r bun-${{ inputs.tag }}.zip bun-${{ inputs.tag }}
-      - if: ${{ inputs.only-zig }}
-        name: Upload Zig Object
-        uses: actions/upload-artifact@v4
-        with:
-          name: bun-zig-${{ inputs.tag }}
-          path: ${{ runner.temp }}/release/bun-zig.o
-          if-no-files-found: error
       - if: ${{ !inputs.only-zig }}
         name: Upload bun-${{ inputs.tag }}
         uses: actions/upload-artifact@v4
