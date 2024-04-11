@@ -40,13 +40,13 @@ jobs:
           sparse-checkout: |
             .gitmodules
             src/deps
+            scripts
       - name: Hash Submodules
         id: hash
         run: |
           print_versions() {
             git submodule | grep -v WebKit
-            llvm-config --version
-            rustc --version
+            echo "LLVM_VERSION=${{ env.LLVM_VERSION }}"
             cat $(echo scripts/build*.sh scripts/all-dependencies.sh | tr " " "\n" | sort)
           }
           echo "hash=$(print_versions | sha1sum | cut -c 1-10)" >> $GITHUB_OUTPUT
