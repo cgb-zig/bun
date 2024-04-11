@@ -138,6 +138,7 @@ ARG BUILD_MACHINE_ARCH
 ARG ZIG_FOLDERNAME=zig-linux-${BUILD_MACHINE_ARCH}-${ZIG_VERSION}
 ARG ZIG_FILENAME=${ZIG_FOLDERNAME}.tar.xz
 ARG ZIG_URL="https://ziglang.org/builds/${ZIG_FILENAME}"
+ENV ZIG_LOCAL_CACHE_DIR=/zig-cache
 
 WORKDIR $GITHUB_WORKSPACE
 
@@ -324,9 +325,8 @@ WORKDIR $BUN_DIR
 COPY src/js_lexer/identifier_data.zig ${BUN_DIR}/src/js_lexer/identifier_data.zig
 COPY src/js_lexer/identifier_cache.zig ${BUN_DIR}/src/js_lexer/identifier_cache.zig
 
-RUN cd $BUN_DIR \
-  && zig run src/js_lexer/identifier_data.zig \
-  && rm -rf zig-cache
+RUN --mount=type=cache,target=/zig-cache cd $BUN_DIR \
+  && zig run src/js_lexer/identifier_data.zig
 
 FROM bun-base as bun-node-fallbacks
 
@@ -387,7 +387,7 @@ COPY src/api ${BUN_DIR}/src/api
 WORKDIR $BUN_DIR
 
 # TODO: move away from Makefile entirely
-RUN bun install --frozen-lockfile \
+RUN ---mount=type=cache,target=/zig-cache bun install --frozen-lockfile \
   && make runtime_js fallback_decoder bun_error \
   && rm -rf src/runtime src/fallback.ts node_modules bun.lockb package.json Makefile
 
@@ -413,7 +413,7 @@ COPY --from=bun-codegen-for-zig ${BUN_DIR}/packages/bun-error/dist ${BUN_DIR}/pa
 
 WORKDIR $BUN_DIR
 
-RUN mkdir -p build \
+RUN --mount=type=cache,target=/ccache --mount=type=cache,target=/zig-cache mkdir -p build \
   && bun run $BUN_DIR/src/codegen/bundle-modules.ts --debug=OFF $BUN_DIR/build \
   && cd build \
   && cmake .. \
@@ -446,6 +446,8 @@ ARG CANARY
 ARG ASSERTIONS
 
 ENV CPU_TARGET=${CPU_TARGET}
+ENV CCACHE_DIR=/ccache
+ENV ZIG_LOCAL_CACHE_DIR=/zig-cache
 
 WORKDIR $BUN_DIR
 
@@ -473,7 +475,7 @@ COPY --from=bun-cpp-objects ${BUN_DIR}/bun-webkit/lib ${BUN_DIR}/bun-webkit/lib
 
 WORKDIR $BUN_DIR/build
 
-RUN cmake .. \
+RUN --mount=type=cache,target=/ccache --mount=type=cache,target=/zig-cache cmake .. \
   -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DBUN_LINK_ONLY=1 \
@@ -504,6 +506,8 @@ ARG CANARY
 ARG ASSERTIONS
 
 ENV CPU_TARGET=${CPU_TARGET}
+ENV CCACHE_DIR=/ccache
+ENV ZIG_LOCAL_CACHE_DIR=/zig-cache
 
 WORKDIR $BUN_DIR
 
@@ -530,7 +534,7 @@ COPY --from=bun-cpp-objects ${BUN_DIR}/bun-webkit/lib ${BUN_DIR}/bun-webkit/lib
 
 WORKDIR $BUN_DIR/build
 
-RUN cmake .. \
+RUN --mount=type=cache,target=/ccache --mount=type=cache,target=/zig-cache cmake .. \
   -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DBUN_LINK_ONLY=1 \
