@@ -1,4 +1,4 @@
-name: Linux
+name: Build Zig
 
 #permissions:
 #  contents: read
@@ -10,6 +10,9 @@ on:
         type: string
         default: ubuntu-latest
       tag:
+        type: string
+        required: true
+      os:
         type: string
         required: true
       arch:
@@ -27,10 +30,13 @@ on:
       canary:
         type: boolean
         default: false
+      only-zig:
+        type: boolean
+        default: true
 
 jobs:
-  build:
-    name: Build
+  build-zig:
+    name: Build Zig
     runs-on: ${{ inputs.runs-on }}
     steps:
       - name: Setup Docker
@@ -42,9 +48,9 @@ jobs:
       - name: Restore Cache
         uses: actions/cache@v4
         with:
-          key: ${{ inputs.tag }}-${{ github.ref_name }}
+          key: bun-${{ inputs.tag }}-${{ github.ref_name }}
           restore-keys: |
-            ${{ inputs.tag }}-
+            bun-${{ inputs.tag }}-
           path: |
             /ccache
             /zig-cache
@@ -53,7 +59,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: false
-          target: artifact
+          target: ${{ inputs.only-zig && 'build_release_obj' || 'artifact' }}
           cache-from: |
             type=local,src=${{ runner.temp }}/dockercache
           cache-to: |
@@ -62,6 +68,7 @@ jobs:
             linux/${{ inputs.arch == 'x64' && 'amd64' || 'arm64' }}
           build-args: |
             GIT_SHA=${{ github.sha }}
+            TRIPLET=${{ inputs.os == 'darwin' && format('{0}-macos-none', inputs.arch == 'x64' && 'x86_64' || 'aarch64') || inputs.os == 'windows' && format('{0}-windows-msvc', inputs.arch == 'x64' && 'x86_64' || 'aarch64') || format('{0}-linux-gnu', inputs.arch == 'x64' && 'x86_64' || 'aarch64') }}
             ARCH=${{ inputs.arch == 'x64' && 'x86_64' || 'aarch64' }}
             BUILDARCH=${{ inputs.arch == 'x64' && 'amd64' || 'arm64' }}
             BUILD_MACHINE_ARCH=${{ inputs.arch == 'x64' && 'x86_64' || 'aarch64' }}
@@ -82,13 +89,22 @@ jobs:
           mv bun bun-${{ inputs.tag }}/bun
           zip -r bun-${{ inputs.tag }}-profile.zip bun-${{ inputs.tag }}-profile
           zip -r bun-${{ inputs.tag }}.zip bun-${{ inputs.tag }}
-      - name: Upload bun-${{ inputs.tag }}
+      - if: ${{ inputs.only-zig }}
+        name: Upload Zig Object
+        uses: actions/upload-artifact@v4
+        with:
+          name: bun-zig-${{ inputs.tag }}
+          path: ${{ runner.temp }}/release/bun-zig.o
+          if-no-files-found: error
+      - if: ${{ !inputs.only-zig }}
+        name: Upload bun-${{ inputs.tag }}
         uses: actions/upload-artifact@v4
         with:
           name: bun-${{ inputs.tag }}
           path: ${{ runner.temp }}/release/bun-${{ inputs.tag }}.zip
           if-no-files-found: error
-      - name: Upload bun-${{ inputs.tag }}-profile
+      - if: ${{ !inputs.only-zig }}
+        name: Upload bun-${{ inputs.tag }}-profile
         uses: actions/upload-artifact@v4
         with:
           name: bun-${{ inputs.tag }}-profile

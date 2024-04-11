@@ -6,39 +6,65 @@ on:
   pull_request:
 
 jobs:
-  linux-x64:
-    name: Build linux-x64
-    uses: ./.github/workflows/linux.yml
+  # linux-x64:
+  #   name: Build linux-x64
+  #   uses: ./.github/workflows/build-zig.yml
+  #   with:
+  #     runs-on: namespace-profile-fast-ci
+  #     tag: linux-x64
+  #     os: linux
+  #     arch: x64
+  #     cpu: haswell
+  #     canary: ${{ github.ref == 'refs/heads/main' }}
+  #     only-zig: false
+  # linux-x64-baseline:
+  #   name: Build linux-x64-baseline
+  #   uses: ./.github/workflows/build-zig.yml
+  #   with:
+  #     runs-on: namespace-profile-fast-ci
+  #     tag: linux-x64-baseline
+  #     os: linux
+  #     arch: x64
+  #     cpu: nehalem
+  #     canary: ${{ github.ref == 'refs/heads/main' }}
+  #     only-zig: false
+  darwin-x64:
+    name: "Build Zig: darwin-x64"
+    uses: ./.github/workflows/build-zig.yml
     with:
       runs-on: namespace-profile-fast-ci
-      tag: linux-x64
+      tag: darwin-x64
+      os: darwin
       arch: x64
       cpu: haswell
       canary: ${{ github.ref == 'refs/heads/main' }}
-  linux-x64-test:
-    name: Test linux-x64
-    needs: linux-x64
-    if: ${{ github.event_name == 'pull_request' }}
-    uses: ./.github/workflows/test.yml
-    with:
-      pr-number: ${{ github.event.number }}
-      runs-on: ubuntu-latest
-      baseline: false
-  linux-x64-baseline:
-    name: Build linux-x64-baseline
-    uses: ./.github/workflows/linux.yml
+      only-zig: true
+  darwin-x64-baseline:
+    name: "Build Zig: darwin-x64-baseline"
+    uses: ./.github/workflows/build-zig.yml
     with:
       runs-on: namespace-profile-fast-ci
-      tag: linux-x64-baseline
+      tag: darwin-x64-baseline
+      os: darwin
       arch: x64
       cpu: nehalem
       canary: ${{ github.ref == 'refs/heads/main' }}
-  linux-x64-baseline-test:
-    name: Test linux-x64-baseline
-    needs: linux-x64-baseline
-    if: ${{ github.event_name == 'pull_request' }}
-    uses: ./.github/workflows/test.yml
-    with:
-      pr-number: ${{ github.event.number }}
-      runs-on: ubuntu-latest
-      baseline: true
+      only-zig: true
+  # linux-x64-test:
+  #   name: Test linux-x64
+  #   needs: linux-x64
+  #   if: ${{ github.event_name == 'pull_request' }}
+  #   uses: ./.github/workflows/test.yml
+  #   with:
+  #     pr-number: ${{ github.event.number }}
+  #     runs-on: ubuntu-latest
+  #     baseline: false
+  # linux-x64-baseline-test:
+  #   name: Test linux-x64-baseline
+  #   needs: linux-x64-baseline
+  #   if: ${{ github.event_name == 'pull_request' }}
+  #   uses: ./.github/workflows/test.yml
+  #   with:
+  #     pr-number: ${{ github.event.number }}
+  #     runs-on: ubuntu-latest
+  #     baseline: true
