@@ -98,8 +98,8 @@ jobs:
       baseline: false
   darwin-x64-baseline-test:
     if: ${{ github.event_name == 'pull_request' }}
-    name: Test linux-x64-baseline
-    needs: linux-x64-baseline
+    name: Test darwin-x64-baseline
+    needs: darwin-x64-baseline
     uses: ./.github/workflows/test.yml
     with:
       pr-number: ${{ github.event.number }}
@@ -107,8 +107,8 @@ jobs:
       baseline: true
   darwin-aarch64-test:
     if: ${{ github.event_name == 'pull_request' }}
-    name: Test linux-aarch64
-    needs: linux-aarch64
+    name: Test darwin-aarch64
+    needs: darwin-aarch64
     uses: ./.github/workflows/test.yml
     with:
       pr-number: ${{ github.event.number }}
