@@ -39,7 +39,7 @@ jobs:
     name: Build darwin-x64
     uses: ./.github/workflows/build-darwin.yml
     with:
-      runs-on: ${{ github.repository_owner == 'oven-sh' && 'namespace-profile-bun-ci-darwin-aarch64' || 'macos-12-large' }}
+      runs-on: ${{ github.repository_owner == 'oven-sh' && 'macos-12-large' || 'macos-12' }}
       tag: darwin-x64
       arch: x64
       cpu: haswell
@@ -47,7 +47,7 @@ jobs:
     name: Build darwin-x64-baseline
     uses: ./.github/workflows/build-darwin.yml
     with:
-      runs-on: ${{ github.repository_owner == 'oven-sh' && 'namespace-profile-bun-ci-darwin-aarch64' || 'macos-12-large' }}
+      runs-on: ${{ github.repository_owner == 'oven-sh' && 'macos-12-large' || 'macos-12' }}
       tag: darwin-x64-baseline
       arch: x64
       cpu: nehalem
@@ -55,7 +55,7 @@ jobs:
     name: Build darwin-aarch64
     uses: ./.github/workflows/build-darwin.yml
     with:
-      runs-on: ${{ github.repository_owner == 'oven-sh' && 'namespace-profile-bun-ci-darwin-aarch64' || 'macos-12-large' }}
+      runs-on: ${{ github.repository_owner == 'oven-sh' && 'namespace-profile-bun-ci-darwin-aarch64' || 'macos-14' }}
       tag: darwin-aarch64
       arch: aarch64
       cpu: native
