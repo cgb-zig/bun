@@ -115,10 +115,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Bun
-        uses: ./.github/actions/setup-bun
-        with:
-          bun-version: ${{ env.BUN_VERSION }}
       # TODO: Figure out how to cache homebrew dependencies
       - name: Install Dependencies
         env:
@@ -143,6 +139,10 @@ jobs:
           echo "$(brew --prefix coreutils)/libexec/gnubin" >> $GITHUB_PATH
           echo "$(brew --prefix llvm@$LLVM_VERSION)/bin" >> $GITHUB_PATH
           brew link --overwrite llvm@$LLVM_VERSION
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
       - if: ${{ !inputs.no-cache }}
         name: Restore Cache
         uses: actions/cache@v4
@@ -174,4 +174,107 @@ jobs:
         with:
           name: bun-${{ inputs.tag }}-cpp
           path: ${{ runner.temp }}/bun-cpp-obj/bun-cpp-objects.a
+          if-no-files-found: error
+  build-zig:
+    name: Build Zig
+    uses: ./.github/workflows/build-zig.yml
+    with:
+      os: darwin
+      tag: ${{ inputs.tag }}
+      arch: ${{ inputs.arch }}
+      cpu: ${{ inputs.cpu }}
+      assertions: ${{ inputs.assertions }}
+      deoptimize: ${{ inputs.deoptimize }}
+      canary: ${{ inputs.canary }}
+      no-cache: ${{ inputs.no-cache }}
+      only-zig: true
+  link:
+    name: Link
+    runs-on: ${{ inputs.runs-on }}
+    needs:
+      - build-submodules
+      - build-cpp
+      - build-zig
+    steps:
+      - uses: actions/checkout@v4
+      # TODO: Figure out how to cache homebrew dependencies
+      - name: Install Dependencies
+        env:
+          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_INSTALL_CLEANUP: 1
+        run: |
+          brew install --force \
+            llvm@${{ env.LLVM_VERSION }} \
+            ccache \
+            rust \
+            pkg-config \
+            coreutils \
+            libtool \
+            cmake \
+            libiconv \
+            automake \
+            openssl@1.1 \
+            ninja \
+            gnu-sed
+          echo "$(brew --prefix ccache)/bin" >> $GITHUB_PATH
+          echo "$(brew --prefix coreutils)/libexec/gnubin" >> $GITHUB_PATH
+          echo "$(brew --prefix llvm@$LLVM_VERSION)/bin" >> $GITHUB_PATH
+          brew link --overwrite llvm@$LLVM_VERSION
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: Download bun-${{ inputs.tag }}-deps
+        uses: actions/download-artifact@v4
+        with:
+          name: bun-${{ inputs.tag }}-deps
+          path: ${{ runner.temp }}/bun-deps
+      - name: Download bun-${{ inputs.tag }}-cpp
+        uses: actions/download-artifact@v4
+        with:
+          name: bun-${{ inputs.tag }}-cpp
+          path: ${{ runner.temp }}/bun-cpp-obj
+      - name: Download bun-${{ inputs.tag }}-zig
+        uses: actions/download-artifact@v4
+        with:
+          name: bun-${{ inputs.tag }}-zig
+          path: ${{ runner.temp }}/release
+      - name: Link
+        env:
+          CPU_TARGET: ${{ inputs.cpu }}
+        run: |
+          SRC_DIR=$PWD
+          mkdir ${{ runner.temp }}/link-build
+          cd ${{ runner.temp }}/link-build
+          cmake $SRC_DIR \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DUSE_LTO=ON \
+            -DBUN_LINK_ONLY=1 \
+            -DBUN_ZIG_OBJ="${{ runner.temp }}/release/bun-zig.o" \
+            -DBUN_CPP_ARCHIVE="${{ runner.temp }}/bun-cpp-obj/bun-cpp-objects.a" \
+            -DBUN_DEPS_OUT_DIR="${{ runner.temp }}/bun-deps" \
+            -DNO_CONFIGURE_DEPENDS=1
+          ninja -v
+      - name: Prepare
+        run: |
+          cd ${{ runner.temp }}/link-build
+          chmod +x bun-profile bun
+          mkdir -p ${{ inputs.tag }}-profile/ ${{ inputs.tag }}/
+          mv bun-profile ${{ inputs.tag }}-profile/bun-profile
+          mv bun ${{ inputs.tag }}/bun
+          zip -r ${{ inputs.tag }}-profile.zip ${{ inputs.tag }}-profile
+          zip -r ${{ inputs.tag }}.zip ${{ inputs.tag }}
+      - name: Upload bun-${{ inputs.tag }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.tag }}
+          path: ${{ runner.temp }}/link-build/${{ inputs.tag }}.zip
+          if-no-files-found: error
+      - name: Upload bun-${{ inputs.tag }}-profile
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.tag }}-profile
+          path: ${{ runner.temp }}/link-build/${{ inputs.tag }}-profile.zip
           if-no-files-found: error
