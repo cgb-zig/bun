@@ -1,64 +1,116 @@
 name: CI
 
-# permissions: write-all
-
 on:
   pull_request:
 
 jobs:
-  # linux-x64:
-  #   name: Build linux-x64
-  #   uses: ./.github/workflows/build-zig.yml
-  #   with:
-  #     runs-on: namespace-profile-fast-ci
-  #     tag: linux-x64
-  #     os: linux
-  #     arch: x64
-  #     cpu: haswell
-  #     canary: ${{ github.ref == 'refs/heads/main' }}
-  #     only-zig: false
-  # linux-x64-baseline:
-  #   name: Build linux-x64-baseline
-  #   uses: ./.github/workflows/build-zig.yml
-  #   with:
-  #     runs-on: namespace-profile-fast-ci
-  #     tag: linux-x64-baseline
-  #     os: linux
-  #     arch: x64
-  #     cpu: nehalem
-  #     canary: ${{ github.ref == 'refs/heads/main' }}
-  #     only-zig: false
+  linux-x64:
+    name: Build linux-x64
+    uses: ./.github/workflows/build-zig.yml
+    with:
+      runs-on: ${{ github.repository_owner == 'oven-sh' && 'namespace-profile-bun-ci-linux-x64' || 'ubuntu-latest' }}
+      tag: linux-x64
+      os: linux
+      arch: x64
+      cpu: haswell
+      only-zig: false
+  linux-x64-baseline:
+    name: Build linux-x64-baseline
+    uses: ./.github/workflows/build-zig.yml
+    with:
+      runs-on: ${{ github.repository_owner == 'oven-sh' && 'namespace-profile-bun-ci-linux-x64' || 'ubuntu-latest' }}
+      tag: linux-x64-baseline
+      os: linux
+      arch: x64
+      cpu: nehalem
+      only-zig: false
+  linux-aarch64:
+    if: ${{ github.repository_owner == 'oven-sh' }}
+    name: Build linux-aarch64
+    uses: ./.github/workflows/build-zig.yml
+    with:
+      runs-on: namespace-profile-bun-ci-linux-aarch64
+      tag: linux-aarch64
+      os: linux
+      arch: aarch64
+      cpu: native
+      only-zig: false
   darwin-x64:
     name: Build darwin-x64
     uses: ./.github/workflows/build-darwin.yml
     with:
+      runs-on: ${{ github.repository_owner == 'oven-sh' && 'namespace-profile-bun-ci-darwin-aarch64' || 'macos-12-large' }}
       tag: darwin-x64
       arch: x64
       cpu: haswell
-      canary: ${{ github.ref == 'refs/heads/main' }}
   darwin-x64-baseline:
     name: Build darwin-x64-baseline
     uses: ./.github/workflows/build-darwin.yml
     with:
+      runs-on: ${{ github.repository_owner == 'oven-sh' && 'namespace-profile-bun-ci-darwin-aarch64' || 'macos-12-large' }}
       tag: darwin-x64-baseline
       arch: x64
       cpu: nehalem
+  darwin-aarch64:
+    name: Build darwin-aarch64
+    uses: ./.github/workflows/build-darwin.yml
+    with:
+      runs-on: ${{ github.repository_owner == 'oven-sh' && 'namespace-profile-bun-ci-darwin-aarch64' || 'macos-12-large' }}
+      tag: darwin-aarch64
+      arch: aarch64
+      cpu: native
       canary: ${{ github.ref == 'refs/heads/main' }}
-  # linux-x64-test:
-  #   name: Test linux-x64
-  #   needs: linux-x64
-  #   if: ${{ github.event_name == 'pull_request' }}
-  #   uses: ./.github/workflows/test.yml
-  #   with:
-  #     pr-number: ${{ github.event.number }}
-  #     runs-on: ubuntu-latest
-  #     baseline: false
-  # linux-x64-baseline-test:
-  #   name: Test linux-x64-baseline
-  #   needs: linux-x64-baseline
-  #   if: ${{ github.event_name == 'pull_request' }}
-  #   uses: ./.github/workflows/test.yml
-  #   with:
-  #     pr-number: ${{ github.event.number }}
-  #     runs-on: ubuntu-latest
-  #     baseline: true
+  linux-x64-test:
+    if: ${{ github.event_name == 'pull_request' }}
+    name: Test linux-x64
+    needs: linux-x64
+    uses: ./.github/workflows/test.yml
+    with:
+      pr-number: ${{ github.event.number }}
+      runs-on: ${{ github.repository_owner == 'oven-sh' && 'namespace-profile-bun-ci-linux-x64' || 'ubuntu-latest' }}
+      baseline: false
+  linux-x64-baseline-test:
+    if: ${{ github.event_name == 'pull_request' }}
+    name: Test linux-x64-baseline
+    needs: linux-x64-baseline
+    uses: ./.github/workflows/test.yml
+    with:
+      pr-number: ${{ github.event.number }}
+      runs-on: ${{ github.repository_owner == 'oven-sh' && 'namespace-profile-bun-ci-linux-x64' || 'ubuntu-latest' }}
+      baseline: true
+  linux-aarch64-test:
+    if: ${{ github.repository_owner == 'oven-sh' && github.event_name == 'pull_request' }}
+    name: Test linux-aarch64
+    needs: linux-aarch64
+    uses: ./.github/workflows/test.yml
+    with:
+      pr-number: ${{ github.event.number }}
+      runs-on: namespace-profile-bun-ci-linux-aarch64
+      baseline: false
+  darwin-x64-test:
+    if: ${{ github.event_name == 'pull_request' }}
+    name: Test darwin-x64
+    needs: darwin-x64
+    uses: ./.github/workflows/test.yml
+    with:
+      pr-number: ${{ github.event.number }}
+      runs-on: ${{ github.repository_owner == 'oven-sh' && 'macos-12-large' || 'macos-12' }}
+      baseline: false
+  darwin-x64-baseline-test:
+    if: ${{ github.event_name == 'pull_request' }}
+    name: Test linux-x64-baseline
+    needs: linux-x64-baseline
+    uses: ./.github/workflows/test.yml
+    with:
+      pr-number: ${{ github.event.number }}
+      runs-on: ${{ github.repository_owner == 'oven-sh' && 'macos-12-large' || 'macos-12' }}
+      baseline: true
+  darwin-aarch64-test:
+    if: ${{ github.event_name == 'pull_request' }}
+    name: Test linux-aarch64
+    needs: linux-aarch64
+    uses: ./.github/workflows/test.yml
+    with:
+      pr-number: ${{ github.event.number }}
+      runs-on: ${{ github.repository_owner == 'oven-sh' && 'namespace-profile-bun-ci-linux-aarch64' || 'macos-14' }}
+      baseline: false
