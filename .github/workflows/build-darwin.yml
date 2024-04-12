@@ -181,6 +181,7 @@ jobs:
     name: Build Zig
     uses: ./.github/workflows/build-zig.yml
     with:
+      runs-on: ${{ github.repository_owner != 'oven-sh' && 'ubuntu-latest' || inputs.arch == 'x64' && 'namespace-profile-bun-ci-linux-x64' || 'namespace-profile-bun-ci-linux-aarch64' }}
       os: darwin
       tag: ${{ inputs.tag }}
       arch: ${{ inputs.arch }}
@@ -280,12 +281,12 @@ jobs:
       - name: Upload bun-${{ inputs.tag }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.tag }}
+          name: bun-${{ inputs.tag }}
           path: ${{ runner.temp }}/link-build/${{ inputs.tag }}.zip
           if-no-files-found: error
       - name: Upload bun-${{ inputs.tag }}-profile
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.tag }}-profile
+          name: bun-${{ inputs.tag }}-profile
           path: ${{ runner.temp }}/link-build/${{ inputs.tag }}-profile.zip
           if-no-files-found: error

@@ -7,29 +7,29 @@ name: Test
 on:
   workflow_call:
     inputs:
-      pr-number:
-        required: true
-        type: string
       runs-on:
         type: string
-        default: ubuntu-latest
-      baseline:
-        type: boolean
-        default: false
+        required: true
+      tag:
+        type: string
+        required: true
+      pr-number:
+        type: string
+        required: true
   workflow_dispatch:
     inputs:
+      runs-on:
+        type: string
+        description: The runner used to run the tests
+        required: true
+      tag:
+        type: string
+        description: The tag of the build to use
+        required: true
       pr-number:
         type: string
         description: The pull request from where to download Bun
         required: true
-      runs-on:
-        type: string
-        description: The runner used to run the tests
-        default: ubuntu-latest
-      baseline:
-        type: boolean
-        description: If the baseline build should be used
-        default: false
 
 jobs:
   test:
@@ -51,7 +51,7 @@ jobs:
       - name: Download Bun
         uses: dawidd6/action-download-artifact@v3
         with:
-          name: bun-${{ runner.os == 'macOS' && 'darwin' || runner.os == 'Windows' && 'windows' || 'linux' }}-${{ runner.arch == 'X64' && 'x64' || 'aarch64' }}${{ inputs.baseline && '-baseline' || '' }}
+          name: bun-${{ inputs.tag }}
           path: ${{ runner.temp }}/bun
           github_token: ${{ github.token }}
           pr: ${{ inputs.pr-number }}
